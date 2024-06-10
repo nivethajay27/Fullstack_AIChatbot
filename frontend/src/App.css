@@ -1,0 +1,356 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+  scroll-behavior: smooth;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header h1 {
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  margin: 0 5px;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+  color: #333;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.tabs button.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.content {
+  margin-top: 20px;
+}
+
+.login-register-container {
+  width: 400px; /* Increased width */
+  padding: 20px; /* Adjusted padding */
+  background-color: #1b1b1b; /* Keep the same dark background color */
+  border: 1px solid #333; /* Slightly darker border */
+  border-radius: 10px; /* Rounded corners */
+  display: flex; /* Flexbox for centering content */
+  flex-direction: column; /* Column layout */
+  align-items: center; /* Center items horizontally */
+  justify-content: center; /* Center items vertically */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+  margin: 0 auto; /* Center on page */
+  margin-top: 50px; /* Add space from top */
+}
+.login-register-box {
+  width: 100%; /* Full width of the outer container */
+  max-width: 350px; /* Maximum width of inner container */
+  background-color: #2c2c2c; /* Slightly lighter dark background */
+  padding: 20px; /* Inner padding */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3); /* Inner shadow */
+}
+.login-register-box input {
+  width: calc(90% - 20px); /* Full width minus padding */
+  padding: 10px; /* Input padding */
+  margin-bottom: 15px; /* Space between inputs */
+  border: 1px solid #555; /* Border */
+  border-radius: 5px; /* Rounded corners */
+  font-size: 1rem; /* Font size */
+  background-color: #3a3a3a; 
+  color: #fff; 
+}
+
+.login-register-box button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.login-register-box button:hover {
+  background-color: #0056b3;
+}
+
+.main-content {
+  width: 85%;
+}
+
+.token-usage {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.token-usage div {
+  margin: 5px 0;
+}
+
+.timestamp {
+  margin-left: auto;
+  font-size: 0.8em;
+  color: #bbb;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.button-chat {
+  height: 40px;
+  border: none;
+  padding: 0 20px;
+  font-size: 1.2rem;
+  background-color: #5b7eb8;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+p {
+  background-color: darkslategray;
+  max-width: 70%;
+  padding: 15px;
+  border-radius: 50px;
+  color: white;
+  word-wrap: break-word;
+}
+
+p span {
+  margin: 5px;
+}
+
+p span:first-child {
+  margin-right: 0;
+}
+
+.user_msg {
+  text-align: right;
+  margin-left: 30%;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.hide {
+  visibility: hidden;
+  display: none;
+}
+
+main {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  background-color: #1b1b1b;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+ 
+}
+
+form {
+  text-align: center;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  background-color: #242424;
+  padding: 10px 0;
+}
+
+
+input:focus {
+  outline: none;
+}
+
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.button-primary {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.button-primary:hover {
+  background-color: #0056b3;
+}
+
+.button-secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.button-secondary:hover {
+  background-color: #5a6268;
+}
+
+.button-danger {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.button-danger:hover {
+  background-color: #c82333;
+}
+
+.logout-button {
+  margin-left: 920px;
+  background-color: #c7253b; /* Dark grey color */
+  color: #fff; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 20px; /* Adjust padding */
+  font-size: 1rem; /* Font size */
+  cursor: pointer; /* Cursor style */
+  transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.logout-button:hover {
+  background-color: #5a6268; /* Darker grey color on hover */
+}
+
+
+.clear-chat-button {
+  position: absolute;
+  bottom: 10px; /* Adjust as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #6c757d;
+  color: #fff;
+  border: none;
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-transform: none;
+  font-weight: normal;
+  transition: background-color 0.3s ease;
+}
+
+.clear-chat-button:hover {
+  background-color: #5a6268;
+}
+
+
+.input-container {
+  position: relative;
+  width: calc(100% - 15px);
+  padding-left: 10px; 
+}
+
+
+input {
+  width: calc(100% - 40px); /* Adjust width to leave space for icon */
+  height: 40px;
+  border: none;
+  padding: 10px;
+  font-size: 1.2rem;
+  background-color: rgb(28, 23, 23);
+  border-radius: 20px;
+  
+}
+
+/* Add specific styles for the send icon */
+.send-icon {
+  position: absolute;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff; /* Blue color */
+  font-size: 1.5rem; /* Font size */
+  cursor: pointer; /* Cursor style */
+  transition: color 0.3s ease; /* Smooth transition */
+}
+
+.send-icon:hover {
+  color: #0056b3; /* Darker blue color on hover */
+}
+.error-message {
+  color: #dc3545; /* Red color for error message */
+  font-size: 0.8em; /* Adjust font size */
+  margin-top: 5px; /* Add some space above the error message */
+}
+
+
+
+
+.chatbot-container {
+  display: flex;
+  height: 100%;
+  
+}
+
+.previous-chats {
+  flex: 0 0 220px; /* Fixed width for previous chats section */
+  padding: 20px;
+  background-color: #333;
+}
+
+
+
+.new-chat-button {
+  display: block;
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  text-align: center;
+  background-color: #007bff; /* Blue color for button */
+  color: #fff; /* White text color */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.divider {
+  width: 1px;
+  height: 100%;
+  background-color: #555; /* Darker color for divider */
+}
+
+.chat-session {
+  position: relative;
+  flex-grow: 1;
+  padding: 10px;
+  background-color: #222;
+}
+
+
