@@ -50,7 +50,7 @@ Create new table using   CREATE TABLE users (
   password VARCHAR(255) NOT NULL,
   tokens INT NOT NULL DEFAULT 1000)
 
-6. Testing  
+5. Testing  
 
 For Backend -   cd backend 
 npm test
