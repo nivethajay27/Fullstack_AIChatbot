@@ -62,7 +62,7 @@ function App() {
           <div className="main-content">
             <Routes>
               <Route path="/chatbot" element={<Chatbot />} />
-              <Route path="*" element={<Navigate to="/" />} />
+              <Route path="*" element={<Navigate to="/chatbot" />} />
             </Routes>
           </div>
         )}
