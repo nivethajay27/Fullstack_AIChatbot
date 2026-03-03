@@ -16,6 +16,11 @@ Full-stack chatbot app with:
 
 ![Home UI](docs/images/home.png)
 
+## API Documentation
+
+- New API docs: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
+- Legacy file retained: `FullStack ChatBOT API Documentation.pdf`
+
 ## Features
 
 - User registration and login
