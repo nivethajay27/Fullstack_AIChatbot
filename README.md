@@ -1,71 +1,112 @@
-FullStack ChatBOT Documentation
+# FullStack AI Chatbot
 
-Overview:
-The FullStack ChatBOT is a web-based application that allows users to register, login, and interact with a chatbot in real-time. It provides a seamless user experience with a React-based frontend and an Express.js backend and Anthropic API for AI response.
+Full-stack chatbot app with:
+- React + Vite frontend
+- Express + PostgreSQL backend
+- JWT authentication
+- Token usage tracking per user
+- Light/Dark theme toggle UI
 
-Features:
-User registration and login (Token-based authentication for secure communication).
+## Home Screenshot
 
-Real-time chatbot interaction.
+Add your screenshot at `docs/images/home.png`, then it will render here:
 
-Scalable architecture for handling varying traffic loads.
+![Home UI](docs/images/home.png)
 
-Prerequisites:
-Node.js and npm installed on your machine.
+## Features
 
-PostgreSQL database installed and running locally.
+- User registration and login
+- Protected chat endpoint with JWT auth
+- Multi-chat session UI
+- Token usage display (input/output/available)
+- Responsive interface for desktop/mobile
+- Theme switcher (dark/light)
 
-Git installed for cloning the project repository.
+## Project Structure
 
+- `frontend/` React app
+- `backend/` Express API + DB access
+- `backend/schema.sql` users table schema
+- `backend/.env.example` backend environment template
 
-Installation and Setup:
-Here are the deployment instructions for running the FullStack ChatBOT application on localhost:
+## Prerequisites
 
-1. Clone the project repository from GitHub 
+- Node.js 18+
+- npm
+- PostgreSQL 14+
 
-2. Run the Backend Server: 
+## Backend Setup
 
-    cd backend     
-    npm run server
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
 
-    This will start the Express.js server on port 8080 by default.
+Update `backend/.env`:
 
-3. Run the Frontend React App:
-    
-     cd frontend
-     npm run dev
+```env
+PORT=8080
+DB_USER=admin
+DB_HOST=localhost
+DB_NAME=chatbot_db
+DB_PASSWORD=change_me
+DB_PORT=5432
+JWT_SECRET=change_me_to_a_long_random_secret
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-3-haiku-20240307
+TOKEN_LIMIT=1000
+```
 
-4. Database Setup:
+Create database/table:
 
-    Create a PostgreSQL database named chatbot_db.
-   
-    Run the database migrations to create the necessary tables:
-    npm run migrate
-   
- Or :
+```bash
+PGPASSWORD=change_me psql -h localhost -U admin -d chatbot_db -f schema.sql
+```
 
-Create new table using   CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(50) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  tokens INT NOT NULL DEFAULT 1000)
+Run backend:
 
-5. Testing  
+```bash
+npm run server
+```
 
-For Backend -   cd backend 
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Optional frontend API override:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+## Tests
+
+Backend:
+
+```bash
+cd backend
 npm test
+```
 
-For frontend -   cd frontend/src
+Frontend:
+
+```bash
+cd frontend
 npm test
+```
 
-Environment variables (backend):
+## Recent Changes
 
-- `DB_USER`
-- `DB_HOST`
-- `DB_NAME`
-- `DB_PASSWORD`
-- `DB_PORT`
-- `JWT_SECRET`
-- `ANTHROPIC_API_KEY`
-- `ANTHROPIC_MODEL`
-- `TOKEN_LIMIT`
+- Removed hardcoded backend secrets/config and moved to env variables
+- Added `.env.example` for backend config
+- Improved backend route validation and error responses
+- Added fallback response mode when Anthropic key is not set
+- Refactored frontend auth/session flow
+- Redesigned UI and added dark/light mode toggle
+- Updated chat bubble alignment (user right, bot left)
+- Added better `.gitignore` coverage for env and generated files
