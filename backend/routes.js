@@ -14,6 +14,7 @@ import {
   TOKEN_LIMIT,
   UPLOAD_DIR,
   MAX_ATTACHMENT_SIZE_MB,
+  TRASH_RETENTION_DAYS,
 } from './config.js';
 
 export const secretKey = JWT_SECRET;
@@ -36,6 +37,7 @@ const upload = multer({
 const isValidText = (value) => typeof value === 'string' && value.trim().length > 0;
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const AUTO_TITLE = 'New chat';
+const TRASH_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -57,6 +59,8 @@ const mapSession = (row) => ({
   id: row.id,
   title: row.title,
   archived: row.archived,
+  deletedAt: row.deleted_at,
+  restoreBy: row.deleted_at ? new Date(new Date(row.deleted_at).getTime() + TRASH_MS).toISOString() : null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -77,10 +81,13 @@ const mapAttachment = (row) => ({
   createdAt: row.created_at,
 });
 
-const getSession = async (pool, userId, sessionId) => {
+const getSession = async (pool, userId, sessionId, options = {}) => {
+  const includeDeleted = options.includeDeleted === true;
   const result = await pool.query(
-    'SELECT * FROM chat_sessions WHERE id = $1 AND user_id = $2',
-    [sessionId, userId],
+    `SELECT * FROM chat_sessions
+     WHERE id = $1 AND user_id = $2
+       AND ($3::boolean = TRUE OR deleted_at IS NULL)`,
+    [sessionId, userId, includeDeleted],
   );
   return result.rows[0] || null;
 };
@@ -226,13 +233,44 @@ router.post('/login', async (req, res) => {
 router.get('/sessions', authenticateToken, async (req, res) => {
   const pool = req.pool;
   const includeArchived = req.query.includeArchived === 'true';
+  const includeDeleted = req.query.includeDeleted === 'true';
 
   const result = await pool.query(
     `SELECT * FROM chat_sessions
-     WHERE user_id = $1 AND ($2::boolean = TRUE OR archived = FALSE)
+     WHERE user_id = $1
+       AND ($2::boolean = TRUE OR archived = FALSE)
+       AND ($3::boolean = TRUE OR deleted_at IS NULL)
      ORDER BY updated_at DESC`,
-    [req.user.id, includeArchived],
+    [req.user.id, includeArchived, includeDeleted],
   );
+  return res.json({ sessions: result.rows.map(mapSession) });
+});
+
+router.get('/sessions/search', authenticateToken, async (req, res) => {
+  const pool = req.pool;
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  const view = typeof req.query.view === 'string' ? req.query.view : 'active';
+  if (!q) return res.json({ sessions: [] });
+
+  let viewPredicate = 's.deleted_at IS NULL AND s.archived = FALSE';
+  if (view === 'archived') viewPredicate = 's.deleted_at IS NULL AND s.archived = TRUE';
+  if (view === 'trash') viewPredicate = 's.deleted_at IS NOT NULL';
+
+  const result = await pool.query(
+    `SELECT DISTINCT s.*
+     FROM chat_sessions s
+     LEFT JOIN chat_messages m ON m.session_id = s.id
+     WHERE s.user_id = $1
+       AND (${viewPredicate})
+       AND (
+         s.title ILIKE $2
+         OR COALESCE(m.content, '') ILIKE $2
+       )
+     ORDER BY s.updated_at DESC
+     LIMIT 100`,
+    [req.user.id, `%${q}%`],
+  );
+
   return res.json({ sessions: result.rows.map(mapSession) });
 });
 
@@ -253,7 +291,7 @@ router.post('/sessions', authenticateToken, async (req, res) => {
 router.patch('/sessions/:sessionId', authenticateToken, async (req, res) => {
   const pool = req.pool;
   const sessionId = Number.parseInt(req.params.sessionId, 10);
-  const session = await getSession(pool, req.user.id, sessionId);
+  const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
   if (!session) return res.status(404).json({ error: 'Session not found' });
 
   const title = isValidText(req.body?.title) ? req.body.title.trim().slice(0, 120) : session.title;
@@ -275,6 +313,42 @@ router.delete('/sessions/:sessionId', authenticateToken, async (req, res) => {
   const session = await getSession(pool, req.user.id, sessionId);
   if (!session) return res.status(404).json({ error: 'Session not found' });
 
+  await pool.query(
+    `UPDATE chat_sessions
+     SET deleted_at = NOW(), archived = FALSE, updated_at = NOW()
+     WHERE id = $1`,
+    [sessionId],
+  );
+  return res.status(204).end();
+});
+
+router.post('/sessions/:sessionId/restore', authenticateToken, async (req, res) => {
+  const pool = req.pool;
+  const sessionId = Number.parseInt(req.params.sessionId, 10);
+  const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
+  if (!session || !session.deleted_at) return res.status(404).json({ error: 'Trashed session not found' });
+
+  const deletedAtMs = new Date(session.deleted_at).getTime();
+  if (Number.isFinite(deletedAtMs) && Date.now() - deletedAtMs > TRASH_MS) {
+    return res.status(410).json({ error: 'Restore window expired. Delete permanently.' });
+  }
+
+  const result = await pool.query(
+    `UPDATE chat_sessions
+     SET deleted_at = NULL, updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [sessionId],
+  );
+  return res.json({ session: mapSession(result.rows[0]) });
+});
+
+router.delete('/sessions/:sessionId/permanent', authenticateToken, async (req, res) => {
+  const pool = req.pool;
+  const sessionId = Number.parseInt(req.params.sessionId, 10);
+  const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
+  if (!session || !session.deleted_at) return res.status(404).json({ error: 'Trashed session not found' });
+
   const attachments = await pool.query('SELECT storage_path FROM chat_attachments WHERE session_id = $1', [sessionId]);
   await pool.query('DELETE FROM chat_sessions WHERE id = $1', [sessionId]);
   await Promise.all(
@@ -293,7 +367,7 @@ router.delete('/sessions/:sessionId', authenticateToken, async (req, res) => {
 router.get('/sessions/:sessionId/messages', authenticateToken, async (req, res) => {
   const pool = req.pool;
   const sessionId = Number.parseInt(req.params.sessionId, 10);
-  const session = await getSession(pool, req.user.id, sessionId);
+  const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
   if (!session) return res.status(404).json({ error: 'Session not found' });
 
   const result = await pool.query(
@@ -323,7 +397,7 @@ router.get('/sessions/:sessionId/messages', authenticateToken, async (req, res) 
 router.get('/sessions/:sessionId/attachments', authenticateToken, async (req, res) => {
   const pool = req.pool;
   const sessionId = Number.parseInt(req.params.sessionId, 10);
-  const session = await getSession(pool, req.user.id, sessionId);
+  const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
   if (!session) return res.status(404).json({ error: 'Session not found' });
 
   const result = await pool.query(
@@ -338,6 +412,7 @@ router.post('/sessions/:sessionId/attachments', authenticateToken, upload.single
   const sessionId = Number.parseInt(req.params.sessionId, 10);
   const session = await getSession(pool, req.user.id, sessionId);
   if (!session) return res.status(404).json({ error: 'Session not found' });
+  if (session.deleted_at) return res.status(403).json({ error: 'Cannot upload to trashed session' });
   if (!req.file) return res.status(400).json({ error: 'Attachment file is required' });
 
   const isPdf = req.file.mimetype === 'application/pdf';
@@ -426,9 +501,13 @@ router.post('/sessions/:sessionId/messages/stream', authenticateToken, async (re
       return res.end();
     }
 
-    const session = await getSession(pool, req.user.id, sessionId);
+    const session = await getSession(pool, req.user.id, sessionId, { includeDeleted: true });
     if (!session) {
       writeStreamEvent(res, { type: 'error', error: 'Session not found' });
+      return res.end();
+    }
+    if (session.deleted_at) {
+      writeStreamEvent(res, { type: 'error', error: 'Cannot send messages to trashed session' });
       return res.end();
     }
 

@@ -256,7 +256,7 @@ body.theme-light {
 
 .session-filter {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.35rem;
 }
 
@@ -274,6 +274,15 @@ body.theme-light {
   background: var(--primary);
   color: var(--primary-text);
   border-color: transparent;
+}
+
+.session-search {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  color: var(--text);
+  padding: 0.5rem 0.65rem;
 }
 
 .chat-history-list {
@@ -328,6 +337,8 @@ body.theme-light {
 .toolbar-actions {
   display: flex;
   gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .toolbar-actions button {
@@ -466,6 +477,10 @@ body.theme-light {
   background: color-mix(in srgb, var(--primary) 12%, var(--panel-soft) 88%);
 }
 
+.composer.disabled {
+  opacity: 0.78;
+}
+
 .composer-attachments {
   display: flex;
   flex-wrap: wrap;
@@ -577,6 +592,12 @@ body.theme-light {
 
 .send-button {
   min-width: 90px;
+}
+
+.trash-note {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .lightbox-overlay {

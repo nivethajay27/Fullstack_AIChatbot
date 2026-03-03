@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(120) NOT NULL DEFAULT 'New chat',
   archived BOOLEAN NOT NULL DEFAULT FALSE,
+  deleted_at TIMESTAMP NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -41,5 +42,8 @@ CREATE TABLE IF NOT EXISTS message_attachments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_deleted_at ON chat_sessions(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_chat_attachments_session_id ON chat_attachments(session_id);
+
+ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP NULL;

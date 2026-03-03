@@ -10,6 +10,7 @@ export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-haiku-20240307';
 export const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 export const MAX_ATTACHMENT_SIZE_MB = toInt(process.env.MAX_ATTACHMENT_SIZE_MB, 15);
+export const TRASH_RETENTION_DAYS = toInt(process.env.TRASH_RETENTION_DAYS, 30);
 
 export const DB_CONFIG = {
   user: process.env.DB_USER || 'admin',

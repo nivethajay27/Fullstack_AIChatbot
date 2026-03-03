@@ -20,6 +20,16 @@ const getAuthHeaders = () => {
   };
 };
 
+const readApiError = async (response, fallback) => {
+  try {
+    const data = await response.json();
+    if (data?.error) return data.error;
+  } catch {
+    return fallback;
+  }
+  return fallback;
+};
+
 function Chatbot() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
@@ -33,6 +43,8 @@ function Chatbot() {
   const [tokenUsage, setTokenUsage] = useState(defaultUsage);
   const [error, setError] = useState('');
   const [sessionFilter, setSessionFilter] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const previewUrlsRef = useRef({});
@@ -42,21 +54,34 @@ function Chatbot() {
     [sessions, activeSessionId],
   );
 
-  const visibleSessions = useMemo(() => {
-    if (sessionFilter === 'archived') return sessions.filter((session) => session.archived);
-    return sessions.filter((session) => !session.archived);
+  const filteredSessions = useMemo(() => {
+    if (sessionFilter === 'trash') return sessions.filter((session) => Boolean(session.deletedAt));
+    if (sessionFilter === 'archived') return sessions.filter((session) => !session.deletedAt && session.archived);
+    return sessions.filter((session) => !session.deletedAt && !session.archived);
   }, [sessions, sessionFilter]);
+
+  const visibleSessions = useMemo(() => {
+    if (!searchQuery.trim()) return filteredSessions;
+    if (!Array.isArray(searchResults)) return [];
+    return searchResults;
+  }, [filteredSessions, searchQuery, searchResults]);
 
   const selectedAttachments = useMemo(
     () => attachments.filter((item) => selectedAttachmentIds.includes(item.id)),
     [attachments, selectedAttachmentIds],
   );
+  const isTrashSession = Boolean(activeSession?.deletedAt);
 
   const fetchSessions = async () => {
     const response = await fetch(`${API_BASE_URL}/sessions?includeArchived=true`, {
       headers: { ...getAuthHeaders() },
     });
-    if (!response.ok) throw new Error('Failed to load sessions');
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Session expired. Please log in again.');
+      }
+      throw new Error(await readApiError(response, 'Failed to load sessions'));
+    }
     const data = await response.json();
     const next = data.sessions || [];
     setSessions(next);
@@ -67,7 +92,7 @@ function Chatbot() {
     const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}/messages`, {
       headers: { ...getAuthHeaders() },
     });
-    if (!response.ok) throw new Error('Failed to load messages');
+    if (!response.ok) throw new Error(await readApiError(response, 'Failed to load messages'));
     const data = await response.json();
     setMessages(data.messages || []);
   };
@@ -76,7 +101,7 @@ function Chatbot() {
     const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}/attachments`, {
       headers: { ...getAuthHeaders() },
     });
-    if (!response.ok) throw new Error('Failed to load attachments');
+    if (!response.ok) throw new Error(await readApiError(response, 'Failed to load attachments'));
     const data = await response.json();
     setAttachments(data.attachments || []);
   };
@@ -138,6 +163,40 @@ function Chatbot() {
       setActiveSessionId(visibleSessions[0].id);
     }
   }, [visibleSessions, activeSessionId]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/sessions/search?q=${encodeURIComponent(query)}&view=${encodeURIComponent(sessionFilter)}`,
+          {
+            headers: { ...getAuthHeaders() },
+            signal: controller.signal,
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Search failed');
+        }
+        const data = await response.json();
+        setSearchResults(data.sessions || []);
+      } catch (searchError) {
+        if (searchError.name === 'AbortError') return;
+        setError(searchError.message || 'Search failed.');
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [searchQuery, sessionFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,9 +308,9 @@ function Chatbot() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleTrash = async () => {
     if (!activeSession) return;
-    const ok = window.confirm('Delete this conversation permanently?');
+    const ok = window.confirm('Move this conversation to Trash?');
     if (!ok) return;
 
     const response = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}`, {
@@ -259,7 +318,38 @@ function Chatbot() {
       headers: { ...getAuthHeaders() },
     });
     if (!response.ok) {
-      setError('Failed to delete session.');
+      setError('Failed to move session to trash.');
+      return;
+    }
+    await fetchSessions();
+    setSessionFilter('active');
+  };
+
+  const handleRestore = async () => {
+    if (!activeSession) return;
+    const response = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/restore`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders() },
+    });
+    if (!response.ok) {
+      setError('Failed to restore session.');
+      return;
+    }
+    await fetchSessions();
+    setSessionFilter('active');
+    setActiveSessionId(activeSession.id);
+  };
+
+  const handleDeletePermanent = async () => {
+    if (!activeSession) return;
+    const ok = window.confirm('Delete this trashed conversation permanently?');
+    if (!ok) return;
+    const response = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/permanent`, {
+      method: 'DELETE',
+      headers: { ...getAuthHeaders() },
+    });
+    if (!response.ok) {
+      setError('Failed to permanently delete session.');
       return;
     }
     await fetchSessions();
@@ -272,7 +362,7 @@ function Chatbot() {
   };
 
   const uploadFiles = async (files) => {
-    if (!activeSessionId || !files.length) return;
+    if (!activeSessionId || !files.length || isTrashSession) return;
     setError('');
     for (const file of files) {
       const formData = new FormData();
@@ -320,6 +410,7 @@ function Chatbot() {
   const handleDrop = async (event) => {
     event.preventDefault();
     setIsDragOver(false);
+    if (isTrashSession) return;
     const files = Array.from(event.dataTransfer.files || []);
     if (!files.length) return;
     try {
@@ -331,7 +422,7 @@ function Chatbot() {
 
   const sendMessage = async (event) => {
     event.preventDefault();
-    if (!activeSessionId || !message.trim() || isTyping) return;
+    if (!activeSessionId || !message.trim() || isTyping || isTrashSession) return;
 
     const text = message.trim();
     const tempUserId = `u-${Date.now()}`;
@@ -463,7 +554,22 @@ function Chatbot() {
           >
             Archived
           </button>
+          <button
+            type="button"
+            className={sessionFilter === 'trash' ? 'active' : ''}
+            onClick={() => setSessionFilter('trash')}
+          >
+            Trash
+          </button>
         </div>
+
+        <input
+          className="session-search"
+          type="text"
+          placeholder="Search chats and messages..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
 
         <div className="chat-history-list">
           {visibleSessions.map((session) => (
@@ -484,10 +590,12 @@ function Chatbot() {
         <div className="chat-toolbar">
           <div className="session-title">{activeSession?.title || 'Conversation'}</div>
           <div className="toolbar-actions">
-            <button type="button" onClick={handleRename}>Rename</button>
-            {!activeSession?.archived && <button type="button" onClick={() => handleArchiveState(true)}>Archive</button>}
-            {activeSession?.archived && <button type="button" onClick={() => handleArchiveState(false)}>Unarchive</button>}
-            <button type="button" onClick={handleDelete}>Delete</button>
+            {sessionFilter !== 'trash' && <button type="button" onClick={handleRename}>Rename</button>}
+            {sessionFilter !== 'trash' && !activeSession?.archived && <button type="button" onClick={() => handleArchiveState(true)}>Archive</button>}
+            {sessionFilter !== 'trash' && activeSession?.archived && <button type="button" onClick={() => handleArchiveState(false)}>Unarchive</button>}
+            {sessionFilter !== 'trash' && <button type="button" onClick={handleTrash}>Trash</button>}
+            {sessionFilter === 'trash' && <button type="button" onClick={handleRestore}>Restore</button>}
+            {sessionFilter === 'trash' && <button type="button" onClick={handleDeletePermanent}>Delete Permanently</button>}
           </div>
         </div>
 
@@ -532,9 +640,10 @@ function Chatbot() {
 
         <form onSubmit={sendMessage}>
           <div
-            className={`composer ${isDragOver ? 'drag-over' : ''}`}
+            className={`composer ${isDragOver ? 'drag-over' : ''} ${isTrashSession ? 'disabled' : ''}`}
             onDragOver={(event) => {
               event.preventDefault();
+              if (isTrashSession) return;
               setIsDragOver(true);
             }}
             onDragLeave={() => setIsDragOver(false)}
@@ -581,7 +690,7 @@ function Chatbot() {
             <div className="composer-row">
               <label className="upload-label compact">
                 +
-                <input type="file" accept=".pdf,image/*" multiple onChange={handleUpload} />
+                <input type="file" accept=".pdf,image/*" multiple onChange={handleUpload} disabled={isTrashSession} />
               </label>
               <input
                 type="text"
@@ -589,8 +698,9 @@ function Chatbot() {
                 value={message}
                 placeholder="Type a message, or drag/drop PDF/images here..."
                 onChange={(event) => setMessage(event.target.value)}
+                disabled={isTrashSession}
               />
-              <button className="send-button" type="submit" disabled={isTyping}>
+              <button className="send-button" type="submit" disabled={isTyping || isTrashSession}>
                 Send
               </button>
             </div>
@@ -620,6 +730,7 @@ function Chatbot() {
                 </button>
               ))}
             </div>
+            {isTrashSession && <p className="trash-note">Restore this chat to send new messages.</p>}
           </div>
         </form>
       </div>
