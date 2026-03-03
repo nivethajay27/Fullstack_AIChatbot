@@ -18,8 +18,7 @@ Full-stack chatbot app with:
 
 ## API Documentation
 
-- New API docs: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
-- Legacy file retained: `FullStack ChatBOT API Documentation.pdf`
+- API docs: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
 
 ## Features
 
