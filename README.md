@@ -6,6 +6,10 @@ Full-stack chatbot app with:
 - JWT authentication
 - Token usage tracking per user
 - Light/Dark theme toggle UI
+- Persistent chat sessions/messages in PostgreSQL
+- Streaming assistant responses
+- Conversation rename/archive/delete
+- PDF/Image attachments in prompts
 
 ## Home Screenshot
 
@@ -84,6 +88,8 @@ Optional frontend API override:
 VITE_API_BASE_URL=http://localhost:8080/api
 ```
 
+Backend now auto-runs `backend/schema.sql` on startup, so required tables are created if missing.
+
 ## Tests
 
 Backend:
@@ -110,3 +116,7 @@ npm test
 - Redesigned UI and added dark/light mode toggle
 - Updated chat bubble alignment (user right, bot left)
 - Added better `.gitignore` coverage for env and generated files
+- Added DB-backed chat persistence (sessions/messages)
+- Added streaming chat endpoint and incremental UI rendering
+- Added conversation rename/archive/delete controls
+- Added PDF/image upload + attachment-aware prompts

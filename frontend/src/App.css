@@ -156,7 +156,7 @@ body.theme-light {
 }
 
 .login-register-box input,
-.input-container input {
+.composer-row input {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -167,15 +167,14 @@ body.theme-light {
 }
 
 .login-register-box input:focus,
-.input-container input:focus {
+.composer-row input:focus {
   outline: 2px solid color-mix(in srgb, var(--primary) 45%, white 55%);
   border-color: var(--primary);
 }
 
 .submit-button,
 .send-button,
-.new-chat-button,
-.clear-chat-button {
+.new-chat-button {
   border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
@@ -255,6 +254,28 @@ body.theme-light {
   white-space: nowrap;
 }
 
+.session-filter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.session-filter button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  padding: 0.4rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.session-filter button.active {
+  background: var(--primary);
+  color: var(--primary-text);
+  border-color: transparent;
+}
+
 .chat-history-list {
   overflow: auto;
   display: flex;
@@ -286,10 +307,40 @@ body.theme-light {
 }
 
 .chat-session {
-  display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  gap: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 1rem;
+}
+
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.session-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.toolbar-actions button {
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.72rem;
+  cursor: pointer;
+}
+
+.toolbar-actions button:hover {
+  background: var(--panel-hover);
 }
 
 .token-usage {
@@ -313,7 +364,8 @@ body.theme-light {
 
 .messages-panel {
   overflow: auto;
-  min-height: 330px;
+  min-height: 300px;
+  flex: 1;
   padding-right: 0.22rem;
   display: flex;
   flex-direction: column;
@@ -374,26 +426,204 @@ body.theme-light {
   color: var(--muted);
 }
 
-.input-container {
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0.36rem 0.72rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 0.55rem;
+}
+
+.upload-label input {
+  display: none;
+}
+
+.upload-label.compact {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.composer {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-soft);
+  padding: 0.55rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.composer.drag-over {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--panel-soft) 88%);
+}
+
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.composer-attachment-chip {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.2rem 0.45rem 0.2rem 0.2rem;
+  max-width: 420px;
+}
+
+.composer-attachment-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.composer-attachment-chip span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--accent) 20%, var(--panel) 80%);
+}
+
+.chip-action {
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.chip-action.danger {
+  color: var(--danger);
+}
+
+.composer-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.55rem;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+}
+
+.attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  max-height: 88px;
+  overflow: auto;
+}
+
+.attachment-item {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem 0.2rem 0.24rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 280px;
+}
+
+.attachment-item img {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
+.attachment-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-item.selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 22%, var(--panel) 78%);
 }
 
 .send-button {
   min-width: 90px;
 }
 
-.clear-chat-button {
-  justify-self: flex-end;
-  background: var(--panel-soft);
-  border-color: var(--border);
-  color: var(--text);
-  padding: 0.55rem 0.76rem;
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
-.clear-chat-button:hover {
-  background: var(--panel-hover);
+.lightbox-content {
+  position: relative;
+  max-width: min(900px, 96vw);
+  max-height: 92vh;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 78vh;
+  border-radius: 10px;
+  display: block;
+  margin: 0 auto;
+}
+
+.lightbox-content p {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.lightbox-close {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 @media (max-width: 900px) {

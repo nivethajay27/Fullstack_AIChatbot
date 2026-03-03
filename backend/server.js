@@ -3,6 +3,7 @@ import cors from 'cors';
 import routes from './routes.js';
 import pool from './db.js';
 import { PORT } from './config.js';
+import { initDb } from './initDb.js';
 
 const app = express();
 
@@ -20,6 +21,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await initDb(pool);
+    app.listen(PORT, () => {
+      console.log(`Server listening on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize database schema:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
