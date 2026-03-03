@@ -13,7 +13,6 @@ Full-stack chatbot app with:
 
 ## Home Screenshot
 
-Add your screenshot at `docs/images/home.png`, then it will render here:
 
 ![Home UI](docs/images/home.png)
 
